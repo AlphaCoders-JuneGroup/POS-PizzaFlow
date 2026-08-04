@@ -128,15 +128,52 @@
         });
     }
 
-    /* ---------- Favorites ---------- */
+    /* ---------- Favorites (saved to account) ---------- */
     function initFavorites() {
-        document.querySelectorAll('[data-favorite]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                btn.classList.toggle('active');
-                const icon = btn.querySelector('i');
-                if (icon) {
-                    icon.classList.toggle('bi-heart');
-                    icon.classList.toggle('bi-heart-fill');
+        const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
+        document.querySelectorAll('[data-favorite-toggle]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const url = btn.getAttribute('data-url');
+                if (!url || !token) return;
+
+                btn.disabled = true;
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': token,
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        showToast(data.message || 'Could not update favorite');
+                        return;
+                    }
+
+                    const icon = btn.querySelector('i');
+                    btn.classList.toggle('active', data.favorited);
+                    if (icon) {
+                        icon.className = data.favorited ? 'bi bi-heart-fill' : 'bi bi-heart';
+                    }
+                    btn.setAttribute(
+                        'aria-label',
+                        data.favorited ? 'Remove from favorites' : 'Add to favorites'
+                    );
+                    showToast(data.message);
+                } catch (error) {
+                    showToast('Could not update favorite');
+                } finally {
+                    btn.disabled = false;
                 }
             });
         });
