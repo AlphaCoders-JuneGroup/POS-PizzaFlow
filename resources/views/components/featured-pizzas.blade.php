@@ -9,6 +9,7 @@
 
         <div class="row g-4">
             @foreach ($featuredPizzas as $index => $pizza)
+                @php $isFavorite = in_array($pizza['slug'], $favoriteSlugs ?? [], true); @endphp
                 <div class="col-12 col-sm-6 col-lg-3" data-aos="fade-up" data-aos-delay="{{ ($index % 4) * 80 }}">
                     <article class="pf-pizza-card">
                         <div class="pf-pizza-image-wrap">
@@ -17,12 +18,25 @@
                                  class="pf-pizza-image"
                                  width="400" height="280"
                                  loading="lazy">
-                            <button type="button"
-                                    class="pf-fav-btn"
-                                    aria-label="Add {{ $pizza['name'] }} to favorites"
-                                    data-favorite>
-                                <i class="bi bi-heart"></i>
-                            </button>
+
+                            @auth
+                                <button type="button"
+                                        class="pf-fav-btn {{ $isFavorite ? 'active' : '' }}"
+                                        aria-label="{{ $isFavorite ? 'Remove from favorites' : 'Add to favorites' }}"
+                                        data-favorite-toggle
+                                        data-slug="{{ $pizza['slug'] }}"
+                                        data-url="{{ route('favorites.toggle', $pizza['slug']) }}">
+                                    <i class="bi {{ $isFavorite ? 'bi-heart-fill' : 'bi-heart' }}"></i>
+                                </button>
+                            @else
+                                <a href="{{ route('login') }}"
+                                   class="pf-fav-btn"
+                                   aria-label="Login to save favorites"
+                                   title="Login to save favorites">
+                                    <i class="bi bi-heart"></i>
+                                </a>
+                            @endauth
+
                             <div class="pf-rating-badge">
                                 <i class="bi bi-star-fill"></i>
                                 {{ number_format($pizza['rating'], 1) }}

@@ -25,11 +25,21 @@
             <div class="col-6 col-md-4 col-lg-2" data-aos="fade-up" data-aos-delay="80">
                 <h4 class="pf-footer-heading">Quick Links</h4>
                 <ul class="pf-footer-links list-unstyled">
-                    <li><a href="#home">Home</a></li>
-                    <li><a href="#menu">Menu</a></li>
-                    <li><a href="#offers">Offers</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
+                    <li>
+                        <a href="{{ request()->routeIs('home') ? '#home' : route('home').'#home' }}">Home</a>
+                    </li>
+                    <li>
+                        <a href="{{ request()->routeIs('home') ? '#menu' : route('home').'#menu' }}">Menu</a>
+                    </li>
+                    <li>
+                        <a href="{{ request()->routeIs('home') ? '#offers' : route('home').'#offers' }}">Offers</a>
+                    </li>
+                    <li>
+                        <a href="{{ request()->routeIs('home') ? '#about' : route('home').'#about' }}">About</a>
+                    </li>
+                    <li>
+                        <a href="{{ request()->routeIs('home') ? '#contact' : route('home').'#contact' }}">Contact</a>
+                    </li>
                 </ul>
             </div>
 
@@ -77,8 +87,8 @@
         <div class="pf-footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
             <p class="mb-0">&copy; {{ date('Y') }} PizzaFlow. All rights reserved.</p>
             <div class="d-flex gap-3 pf-footer-legal">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
+                <a href="{{ route('privacy') }}">Privacy Policy</a>
+                <a href="{{ route('terms') }}">Terms of Service</a>
             </div>
         </div>
     </div>
