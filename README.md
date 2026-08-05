@@ -147,7 +147,15 @@ composer install
 cp .env.example .env
 ```
 
-Update your MongoDB connection details.
+Update MongoDB Atlas credentials in `.env`:
+
+```env
+DB_CONNECTION=mongodb
+MONGODB_URI=mongodb+srv://username:password@cluster0.example.mongodb.net/
+MONGODB_DATABASE=pizzaflow
+```
+
+> Requires the PHP `mongodb` extension (`extension=mongodb` in `php.ini`).
 
 ### Generate Application Key
 
@@ -160,6 +168,24 @@ php artisan key:generate
 ```bash
 php artisan serve
 ```
+
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) to view the PizzaFlow landing page.
+
+### Seed Demo Users
+
+```bash
+php artisan db:seed --class=UserSeeder
+```
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@pizzaflow.com | Password123! |
+| Store Manager | manager@pizzaflow.com | Password123! |
+| Customer | customer@pizzaflow.com | Password123! |
+| Kitchen Staff | kitchen@pizzaflow.com | Password123! |
+| Delivery Driver | driver@pizzaflow.com | Password123! |
+
+Public registration creates **Customer** accounts only. Staff roles are seeded/created by admins.
 
 ---
 
