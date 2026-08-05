@@ -29,7 +29,7 @@ class DashboardModules
                 'description' => 'Build pizza menus, sizes, crusts, toppings, and dynamic pricing.',
                 'icon' => 'bi-menu-button-wide',
                 'group' => 'Catalog',
-                'route' => null,
+                'route' => 'admin.menu.index',
                 'roles' => [UserRole::Admin->value, UserRole::StoreManager->value],
             ],
             [

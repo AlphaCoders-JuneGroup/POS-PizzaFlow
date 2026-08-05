@@ -63,6 +63,7 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/favorites/{slug}', [\App\Http\Controllers\FavoriteController::class, 'toggle'])->name('favorites.toggle');
         Route::delete('/favorites/{favorite}', [\App\Http\Controllers\FavoriteController::class, 'destroy'])->name('favorites.destroy');
+        Route::post('/orders', [\App\Http\Controllers\OrderController::class, 'store'])->name('orders.store');
     });
 
     // Role dashboards
@@ -91,5 +92,19 @@ Route::middleware('auth')->group(function () {
         Route::put('/dashboard/users/{user}', [UserManagementController::class, 'update'])->name('users.update');
         Route::patch('/dashboard/users/{user}/toggle', [UserManagementController::class, 'toggleStatus'])->name('users.toggle');
         Route::delete('/dashboard/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+
+        // Menu & Customization Engine
+        Route::get('/dashboard/menu', [\App\Http\Controllers\MenuManagementController::class, 'index'])->name('admin.menu.index');
+        Route::post('/dashboard/menu/categories', [\App\Http\Controllers\MenuManagementController::class, 'storeCategory'])->name('admin.menu.categories.store');
+        Route::put('/dashboard/menu/categories/{category}', [\App\Http\Controllers\MenuManagementController::class, 'updateCategory'])->name('admin.menu.categories.update');
+        Route::delete('/dashboard/menu/categories/{category}', [\App\Http\Controllers\MenuManagementController::class, 'destroyCategory'])->name('admin.menu.categories.destroy');
+
+        Route::post('/dashboard/menu/items', [\App\Http\Controllers\MenuManagementController::class, 'storeMenuItem'])->name('admin.menu.items.store');
+        Route::put('/dashboard/menu/items/{item}', [\App\Http\Controllers\MenuManagementController::class, 'updateMenuItem'])->name('admin.menu.items.update');
+        Route::delete('/dashboard/menu/items/{item}', [\App\Http\Controllers\MenuManagementController::class, 'destroyMenuItem'])->name('admin.menu.items.destroy');
+
+        Route::post('/dashboard/menu/options/{type}', [\App\Http\Controllers\MenuManagementController::class, 'storeOption'])->name('admin.menu.options.store');
+        Route::put('/dashboard/menu/options/{type}/{id}', [\App\Http\Controllers\MenuManagementController::class, 'updateOption'])->name('admin.menu.options.update');
+        Route::delete('/dashboard/menu/options/{type}/{id}', [\App\Http\Controllers\MenuManagementController::class, 'destroyOption'])->name('admin.menu.options.destroy');
     });
 });

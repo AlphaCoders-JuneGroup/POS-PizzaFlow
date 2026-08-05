@@ -56,10 +56,10 @@
                     <a href="{{ route('register') }}" class="btn btn-pf-primary btn-sm">Register</a>
                 @endauth
 
-                <a href="{{ route('home') }}#menu" class="pf-cart-btn" aria-label="Shopping cart">
+                <button type="button" class="pf-cart-btn position-relative" id="cartDrawerTrigger" aria-label="Open shopping cart">
                     <i class="bi bi-cart3"></i>
                     <span class="pf-cart-badge" id="cartCount">0</span>
-                </a>
+                </button>
             </div>
         </div>
     </div>

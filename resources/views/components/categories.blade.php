@@ -7,22 +7,13 @@
             <p class="pf-section-sub">Pick a category and start building your perfect order.</p>
         </div>
 
-        <div class="row g-4">
-            @php
-                $categories = [
-                    ['icon' => '🍕', 'name' => 'Pizza', 'count' => '48+ items', 'href' => '#menu'],
-                    ['icon' => '🥤', 'name' => 'Drinks', 'count' => '20+ items', 'href' => '#menu'],
-                    ['icon' => '🍟', 'name' => 'Sides', 'count' => '16+ items', 'href' => '#menu'],
-                    ['icon' => '🍰', 'name' => 'Desserts', 'count' => '12+ items', 'href' => '#menu'],
-                ];
-            @endphp
-
+        <div class="row g-4 justify-content-center">
             @foreach ($categories as $index => $category)
                 <div class="col-6 col-md-3" data-aos="zoom-in" data-aos-delay="{{ $index * 100 }}">
-                    <a href="{{ $category['href'] }}" class="pf-category-card text-decoration-none">
-                        <div class="pf-category-icon">{{ $category['icon'] }}</div>
-                        <h3 class="pf-category-name">{{ $category['name'] }}</h3>
-                        <p class="pf-category-count">{{ $category['count'] }}</p>
+                    <a href="#menu" class="pf-category-card text-decoration-none pf-category-tab-trigger" data-category-slug="{{ $category->slug }}">
+                        <div class="pf-category-icon"><i class="bi {{ $category->icon }}"></i></div>
+                        <h3 class="pf-category-name">{{ $category->name }}</h3>
+                        <p class="pf-category-count">Fresh Selection</p>
                     </a>
                 </div>
             @endforeach

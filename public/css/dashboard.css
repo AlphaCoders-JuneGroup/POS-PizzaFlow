@@ -572,3 +572,28 @@
         display: none;
     }
 }
+
+/* ---------- Menu Tabs / Pills ---------- */
+.pf-dash-pills .nav-link {
+    background: transparent;
+    color: var(--dash-muted) !important;
+    font-weight: 500;
+    border-radius: 0.75rem;
+    padding: 0.6rem 1.15rem;
+    transition: all 0.25s ease;
+    border: 1px solid transparent;
+}
+
+.pf-dash-pills .nav-link:hover {
+    background: rgba(230, 57, 70, 0.05);
+    color: var(--dash-primary) !important;
+    border-color: rgba(230, 57, 70, 0.15);
+}
+
+.pf-dash-pills .nav-link.active {
+    background: var(--dash-primary) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(230, 57, 70, 0.25);
+}
+

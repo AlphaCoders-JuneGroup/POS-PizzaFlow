@@ -57,10 +57,25 @@ class HomeController extends Controller
             ],
         ];
 
+        $categories = \App\Models\Category::where('is_active', true)->get();
+        $menuItems = \App\Models\MenuItem::where('is_active', true)->get();
+        $sizes = \App\Models\PizzaSize::where('is_active', true)->get();
+        $crusts = \App\Models\PizzaCrust::where('is_active', true)->get();
+        $sauces = \App\Models\PizzaSauce::where('is_active', true)->get();
+        $toppings = \App\Models\PizzaTopping::where('is_active', true)->get();
+
         return view('home.index', [
             'featuredPizzas' => PizzaCatalog::all(),
             'favoriteSlugs' => $favoriteSlugs,
             'testimonials' => $testimonials,
+            'categories' => $categories,
+            'menuItems' => $menuItems,
+            'customizerData' => [
+                'sizes' => $sizes,
+                'crusts' => $crusts,
+                'sauces' => $sauces,
+                'toppings' => $toppings,
+            ],
         ]);
     }
 }
