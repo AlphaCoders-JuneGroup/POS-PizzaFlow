@@ -92,7 +92,7 @@ class DashboardModules
                 'description' => 'Track ingredient stock, low-stock alerts, and topping availability.',
                 'icon' => 'bi-box-seam',
                 'group' => 'Supply',
-                'route' => null,
+                'route' => 'admin.inventory.index',
                 'roles' => [UserRole::Admin->value, UserRole::StoreManager->value],
             ],
             [

@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuestCheckoutController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InventoryManagementController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserManagementController;
@@ -106,5 +107,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/dashboard/menu/options/{type}', [\App\Http\Controllers\MenuManagementController::class, 'storeOption'])->name('admin.menu.options.store');
         Route::put('/dashboard/menu/options/{type}/{id}', [\App\Http\Controllers\MenuManagementController::class, 'updateOption'])->name('admin.menu.options.update');
         Route::delete('/dashboard/menu/options/{type}/{id}', [\App\Http\Controllers\MenuManagementController::class, 'destroyOption'])->name('admin.menu.options.destroy');
+
+        // Inventory & Item Control
+        Route::get('/dashboard/inventory', [InventoryManagementController::class, 'index'])->name('admin.inventory.index');
+        Route::post('/dashboard/inventory', [InventoryManagementController::class, 'store'])->name('admin.inventory.store');
+        Route::put('/dashboard/inventory/{ingredient}', [InventoryManagementController::class, 'update'])->name('admin.inventory.update');
+        Route::delete('/dashboard/inventory/{ingredient}', [InventoryManagementController::class, 'destroy'])->name('admin.inventory.destroy');
+        Route::patch('/dashboard/inventory/{ingredient}/toggle', [InventoryManagementController::class, 'toggleStock'])->name('admin.inventory.toggle');
+        Route::post('/dashboard/inventory/{ingredient}/restock', [InventoryManagementController::class, 'restock'])->name('admin.inventory.restock');
+        Route::post('/dashboard/inventory/{ingredient}/adjust', [InventoryManagementController::class, 'adjust'])->name('admin.inventory.adjust');
     });
 });
