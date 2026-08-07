@@ -46,10 +46,10 @@ class DashboardModules
                 'key' => 'orders',
                 'title' => 'Order Management',
                 'short' => 'Orders',
-                'description' => 'Create, track, update, and cancel pickup or delivery orders.',
+                'description' => 'Receive, track, update, and cancel pickup or delivery orders.',
                 'icon' => 'bi-receipt',
                 'group' => 'Operations',
-                'route' => null,
+                'route' => 'orders.manage.index',
                 'roles' => [
                     UserRole::Admin->value,
                     UserRole::StoreManager->value,
@@ -74,7 +74,7 @@ class DashboardModules
                 'description' => 'Live kitchen queue with preparation status and completion tracking.',
                 'icon' => 'bi-display',
                 'group' => 'Operations',
-                'route' => null,
+                'route' => 'kds.index',
                 'roles' => [
                     UserRole::Admin->value,
                     UserRole::StoreManager->value,

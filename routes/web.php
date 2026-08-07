@@ -9,6 +9,8 @@ use App\Http\Controllers\DeliveryDispatchController;
 use App\Http\Controllers\GuestCheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InventoryManagementController;
+use App\Http\Controllers\KitchenDisplayController;
+use App\Http\Controllers\OrderManagementController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PromoCodeController;
@@ -39,13 +41,13 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
     Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
-
-    Route::get('/guest-checkout', [GuestCheckoutController::class, 'create'])->name('guest.create');
-    Route::post('/guest-checkout', [GuestCheckoutController::class, 'store'])->name('guest.store');
 });
 
-Route::post('/guest-checkout/clear', [GuestCheckoutController::class, 'destroy'])
-    ->name('guest.destroy');
+// Guest ordering (no login required)
+Route::get('/guest-checkout', [GuestCheckoutController::class, 'create'])->name('guest.create');
+Route::post('/guest-checkout', [GuestCheckoutController::class, 'store'])->name('guest.store');
+Route::post('/guest-checkout/order', [GuestCheckoutController::class, 'placeOrder'])->name('guest.order');
+Route::post('/guest-checkout/clear', [GuestCheckoutController::class, 'destroy'])->name('guest.destroy');
 
 /*
 |--------------------------------------------------------------------------
@@ -135,6 +137,36 @@ Route::middleware('auth')->group(function () {
         Route::patch('/dashboard/promotions/{promotion}/toggle', [PromotionManagementController::class, 'toggle'])->name('promotions.toggle');
         Route::delete('/dashboard/promotions/{promotion}', [PromotionManagementController::class, 'destroy'])->name('promotions.destroy');
     });
+
+    // Order Management (Admin, Store Manager, Kitchen, Driver)
+    Route::middleware('role:'.UserRole::Admin->value.'|'.UserRole::StoreManager->value.'|'.UserRole::KitchenStaff->value.'|'.UserRole::DeliveryDriver->value)
+        ->prefix('dashboard/orders')
+        ->name('orders.manage.')
+        ->group(function () {
+            Route::get('/', [OrderManagementController::class, 'index'])->name('index');
+            Route::get('/poll', [OrderManagementController::class, 'poll'])->name('poll');
+            Route::get('/{order}', [OrderManagementController::class, 'show'])->name('show');
+            Route::post('/{order}/advance', [OrderManagementController::class, 'advance'])->name('advance');
+
+            Route::middleware('role:'.UserRole::Admin->value.'|'.UserRole::StoreManager->value)->group(function () {
+                Route::get('/{order}/edit', [OrderManagementController::class, 'edit'])->name('edit');
+                Route::put('/{order}', [OrderManagementController::class, 'update'])->name('update');
+                Route::post('/{order}/cancel', [OrderManagementController::class, 'cancel'])->name('cancel');
+            });
+        });
+
+    // Kitchen Display System (Admin, Store Manager, Kitchen Staff)
+    Route::middleware('role:'.UserRole::Admin->value.'|'.UserRole::StoreManager->value.'|'.UserRole::KitchenStaff->value)
+        ->prefix('dashboard/kds')
+        ->name('kds.')
+        ->group(function () {
+            Route::get('/', [KitchenDisplayController::class, 'index'])->name('index');
+            Route::get('/poll', [KitchenDisplayController::class, 'poll'])->name('poll');
+            Route::post('/{order}/start', [KitchenDisplayController::class, 'start'])->name('start');
+            Route::post('/{order}/baking', [KitchenDisplayController::class, 'baking'])->name('baking');
+            Route::post('/{order}/complete', [KitchenDisplayController::class, 'complete'])->name('complete');
+            Route::post('/{order}/item', [KitchenDisplayController::class, 'itemStatus'])->name('item');
+        });
 
     // Delivery & Dispatch (Admin, Store Manager, Delivery Driver)
     Route::middleware('role:'.UserRole::Admin->value.'|'.UserRole::StoreManager->value.'|'.UserRole::DeliveryDriver->value)

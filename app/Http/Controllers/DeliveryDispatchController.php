@@ -138,8 +138,9 @@ class DeliveryDispatchController extends Controller
             return back()->with('error', 'Pickup orders do not need a delivery driver.');
         }
 
-        if (! in_array($order->status, DeliveryDispatch::DISPATCHABLE_STATUSES, true) && $order->status !== 'out_for_delivery') {
-            return back()->with('error', 'This order can no longer be assigned.');
+        if (! in_array($order->normalizedStatus(), DeliveryDispatch::DISPATCHABLE_STATUSES, true)
+            && $order->normalizedStatus() !== Order::STATUS_OUT) {
+            return back()->with('error', 'Order must be Ready before assigning a driver.');
         }
 
         $validated = $request->validate([
@@ -238,7 +239,10 @@ class DeliveryDispatchController extends Controller
             'route_distance_km' => null,
             'route_eta_minutes' => null,
             'route_summary' => null,
-            'status' => in_array($order->status, ['out_for_delivery'], true) ? 'preparing' : $order->status,
+            'status' => $order->normalizedStatus() === Order::STATUS_OUT
+                ? Order::STATUS_READY
+                : $order->status,
+            'status_updated_at' => now(),
         ])->save();
 
         return back()->with('success', "Driver unassigned from {$order->order_number}.");
@@ -264,13 +268,14 @@ class DeliveryDispatchController extends Controller
         $user = auth()->user();
         $this->authorizeDriverAction($user, $order);
 
-        if (! in_array($order->status, ['pending', 'preparing', 'out_for_delivery'], true)) {
-            return back()->with('error', 'This delivery cannot be started.');
+        if (! in_array($order->normalizedStatus(), ['ready', 'out_for_delivery'], true)) {
+            return back()->with('error', 'Order must be Ready before starting delivery.');
         }
 
         $order->fill([
-            'status' => 'out_for_delivery',
+            'status' => Order::STATUS_OUT,
             'dispatched_at' => $order->dispatched_at ?? now(),
+            'status_updated_at' => now(),
         ])->save();
 
         return back()->with('success', "Delivery {$order->order_number} started. Follow the route details.");
@@ -286,8 +291,9 @@ class DeliveryDispatchController extends Controller
         }
 
         $order->fill([
-            'status' => 'delivered',
+            'status' => Order::STATUS_DELIVERED,
             'delivered_at' => now(),
+            'status_updated_at' => now(),
             'payment_status' => $order->payment_method === 'Cash on Delivery' ? 'Paid' : $order->payment_status,
         ])->save();
 

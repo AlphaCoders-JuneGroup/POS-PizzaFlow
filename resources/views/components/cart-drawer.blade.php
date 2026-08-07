@@ -1,7 +1,14 @@
 {{-- Shopping Cart Drawer --}}
 <div class="pf-cart-drawer-overlay" id="cartDrawerOverlay"></div>
+@php
+    $canPlaceAsCustomer = auth()->check() && auth()->user()->isCustomer();
+    $canPlaceAsGuest = ! auth()->check() && session('guest_checkout') && session('guest');
+    $placeOrderUrl = $canPlaceAsCustomer
+        ? route('orders.store')
+        : ($canPlaceAsGuest ? route('guest.order') : '');
+@endphp
 <div class="pf-cart-drawer text-dark" id="cartDrawer"
-     data-orders-url="{{ auth()->check() && auth()->user()->isCustomer() ? route('orders.store') : '' }}"
+     data-orders-url="{{ $placeOrderUrl }}"
      data-promo-url="{{ route('promotions.apply') }}"
      data-guest-url="{{ route('guest.create') }}"
      data-csrf="{{ csrf_token() }}">
@@ -61,17 +68,27 @@
                 </button>
             @else
                 <div class="alert alert-warning pf-alert mb-0 text-center py-2 fs-7">
-                    Staff accounts cannot place orders.
+                    Staff accounts cannot place orders. Login as <strong>customer@pizzaflow.com</strong>.
                 </div>
             @endif
         @else
             <div class="d-flex flex-column gap-2">
-                <button type="button" class="btn btn-outline-dark w-100 py-2 fw-semibold" id="cartGuestCheckoutBtn">
-                    <i class="bi bi-person-walking me-1"></i> Checkout as Guest
-                </button>
-                <div class="text-center text-muted fs-8">
-                    or <a href="{{ route('login') }}" class="text-pf-primary text-decoration-none">Login</a> to earn rewards
-                </div>
+                @if ($canPlaceAsGuest)
+                    <button type="button" class="btn btn-pf-primary w-100 py-2 fw-semibold" id="cartPlaceOrderBtn">
+                        <i class="bi bi-bag-check-fill me-1"></i> Place Order
+                    </button>
+                    <div class="text-center text-muted fs-8">
+                        Ordering as guest: {{ session('guest.name') }}
+                        · <a href="{{ route('guest.create') }}" class="text-pf-primary text-decoration-none">Edit details</a>
+                    </div>
+                @else
+                    <button type="button" class="btn btn-pf-primary w-100 py-2 fw-semibold" id="cartGuestCheckoutBtn">
+                        <i class="bi bi-bag-check-fill me-1"></i> Order without login
+                    </button>
+                    <div class="text-center text-muted fs-8">
+                        No account needed · or <a href="{{ route('login') }}" class="text-pf-primary text-decoration-none">Login</a>
+                    </div>
+                @endif
             </div>
         @endauth
     </div>

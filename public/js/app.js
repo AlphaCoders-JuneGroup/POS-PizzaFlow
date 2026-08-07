@@ -500,6 +500,7 @@
 
             if (!data.applied) {
                 appliedPromoQuote = null;
+                localStorage.removeItem(PROMO_CODE_KEY);
                 if (msgEl) {
                     msgEl.textContent = data.error || 'Invalid promo code.';
                     msgEl.className = 'small mt-1 text-danger';
@@ -526,7 +527,7 @@
     function submitCartOrder(drawer) {
         const ordersUrl = drawer?.dataset.ordersUrl;
         if (!ordersUrl) {
-            showToast('Please login as a customer to place an order.');
+            showToast('Login as customer, or complete Guest Checkout first.');
             return;
         }
 

@@ -44,7 +44,7 @@ class StaffNotificationSeeder extends Seeder
                         'title' => 'Kitchen queue update',
                         'body' => 'New orders are waiting on the KDS board.',
                         'type' => 'order',
-                        'link' => route('dashboard.kitchen'),
+                        'link' => route('kds.index'),
                     ],
                 ],
                 default => [

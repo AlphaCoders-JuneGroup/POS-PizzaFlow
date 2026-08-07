@@ -50,6 +50,15 @@ class StaffNotifier
         self::sendMany($users, $title, $body, $type, $link);
     }
 
+    public static function notifyKitchen(string $title, string $body, string $type = 'order', ?string $link = null): void
+    {
+        $users = User::where('role', UserRole::KitchenStaff->value)
+            ->where('is_active', true)
+            ->get();
+
+        self::sendMany($users, $title, $body, $type, $link);
+    }
+
     /**
      * @return array{items: Collection<int, StaffNotification>, unread: int}
      */
