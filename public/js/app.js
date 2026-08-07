@@ -7,21 +7,28 @@
     'use strict';
 
     const CART_KEY = 'pizzaflow_cart_count';
+    const PROMO_CODE_KEY = 'pizzaflow_promo_code';
+    let appliedPromoQuote = null;
 
     document.addEventListener('DOMContentLoaded', init);
 
     function init() {
         initLoader();
-        initAOS();
-        initNavbar();
-        initSmoothScroll();
-        initBackToTop();
-        initFavorites();
-        initCart();
-        initNewsletter();
-        initActiveNavOnScroll();
-        initCategoryTabs();
-        initPizzaCustomizer();
+
+        try {
+            initAOS();
+            initNavbar();
+            initSmoothScroll();
+            initBackToTop();
+            initFavorites();
+            initCart();
+            initNewsletter();
+            initActiveNavOnScroll();
+            initCategoryTabs();
+            initPizzaCustomizer();
+        } catch (err) {
+            console.error('PizzaFlow init error:', err);
+        }
     }
 
     /* ---------- Page Loader ---------- */
@@ -29,14 +36,15 @@
         const loader = document.getElementById('page-loader');
         if (!loader) return;
 
-        window.addEventListener('load', () => {
-            setTimeout(() => loader.classList.add('hidden'), 350);
-        });
+        const hide = () => loader.classList.add('hidden');
 
-        // Fallback if load already fired
-        if (document.readyState === 'complete') {
-            setTimeout(() => loader.classList.add('hidden'), 350);
-        }
+        // Hide as soon as DOM is ready — do not wait for slow images/CDN.
+        setTimeout(hide, 200);
+
+        window.addEventListener('load', hide);
+
+        // Hard fallback so the spinner never gets stuck
+        setTimeout(hide, 1500);
     }
 
     /* ---------- AOS ---------- */
@@ -378,19 +386,181 @@
             startShopping?.addEventListener('click', closeCartDrawer);
         }
 
-        // 3. Simulated Checkout / Place Order Actions (Client-side simulation)
+        // 3. Checkout / Place Order
         const placeOrderBtn = document.getElementById('cartPlaceOrderBtn');
         const guestCheckoutBtn = document.getElementById('cartGuestCheckoutBtn');
+        const applyPromoBtn = document.getElementById('cartApplyPromoBtn');
+        const promoInput = document.getElementById('cartPromoCode');
 
-        const simulateCheckout = () => {
-            const orderNum = 'PF-' + Math.floor(10000 + Math.random() * 90000);
-            saveCartItems([]); // Clears cart
-            closeCartDrawer();
-            showToast(`Order placed successfully! Order Number: ${orderNum}`);
-        };
+        placeOrderBtn?.addEventListener('click', () => submitCartOrder(drawer));
+        guestCheckoutBtn?.addEventListener('click', () => {
+            const guestUrl = drawer?.dataset.guestUrl;
+            if (guestUrl) {
+                window.location.href = guestUrl;
+                return;
+            }
+            showToast('Please login or continue as guest.');
+        });
 
-        placeOrderBtn?.addEventListener('click', simulateCheckout);
-        guestCheckoutBtn?.addEventListener('click', simulateCheckout);
+        applyPromoBtn?.addEventListener('click', () => applyPromoCode());
+        promoInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyPromoCode();
+            }
+        });
+
+        // Prefill + auto-apply previously claimed offer codes
+        const claimed = localStorage.getItem(PROMO_CODE_KEY);
+        if (claimed && promoInput) {
+            promoInput.value = claimed;
+            if (getCartItems().length > 0) {
+                applyPromoCode();
+            }
+        }
+
+        document.querySelectorAll('[data-claim-promo]').forEach((btn) => {
+            btn.addEventListener('click', async (event) => {
+                event.preventDefault();
+                const code = (btn.getAttribute('data-claim-promo') || '').trim().toUpperCase();
+                if (!code) return;
+
+                localStorage.setItem(PROMO_CODE_KEY, code);
+                if (promoInput) promoInput.value = code;
+
+                document.querySelectorAll('[data-claim-promo]').forEach((el) => {
+                    el.classList.remove('is-claimed');
+                    if (el.dataset.originalLabel) {
+                        el.textContent = el.dataset.originalLabel;
+                    }
+                });
+                if (!btn.dataset.originalLabel) {
+                    btn.dataset.originalLabel = btn.textContent.trim();
+                }
+                btn.classList.add('is-claimed');
+                btn.textContent = 'Claimed ✓';
+
+                openCartDrawer();
+
+                const items = getCartItems();
+                if (items.length === 0) {
+                    showToast(`${code} claimed! Add pizzas, then checkout — discount applies.`);
+                    const msgEl = document.getElementById('cartPromoMessage');
+                    if (msgEl) {
+                        msgEl.textContent = `${code} ready. Add items to see your discount.`;
+                        msgEl.className = 'small mt-1 text-success';
+                    }
+                    return;
+                }
+
+                await applyPromoCode();
+                showToast(`${code} claimed and applied to your order.`);
+            });
+        });
+    }
+
+    function cartSubtotal(items) {
+        return items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    }
+
+    async function applyPromoCode() {
+        const drawer = document.getElementById('cartDrawer');
+        const promoInput = document.getElementById('cartPromoCode');
+        const msgEl = document.getElementById('cartPromoMessage');
+        const promoUrl = drawer?.dataset.promoUrl;
+        if (!promoUrl || !promoInput) return;
+
+        const items = getCartItems();
+        const subtotal = cartSubtotal(items);
+        const code = promoInput.value.trim().toUpperCase();
+
+        if (!code) {
+            appliedPromoQuote = null;
+            localStorage.removeItem(PROMO_CODE_KEY);
+            if (msgEl) {
+                msgEl.textContent = 'Promo cleared.';
+                msgEl.className = 'small mt-1 text-muted';
+            }
+            renderCartDrawer();
+            return;
+        }
+
+        try {
+            const res = await fetch(promoUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': drawer.dataset.csrf || '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ code, subtotal }),
+            });
+            const data = await res.json();
+
+            if (!data.applied) {
+                appliedPromoQuote = null;
+                if (msgEl) {
+                    msgEl.textContent = data.error || 'Invalid promo code.';
+                    msgEl.className = 'small mt-1 text-danger';
+                }
+                renderCartDrawer();
+                return;
+            }
+
+            appliedPromoQuote = data.quote;
+            localStorage.setItem(PROMO_CODE_KEY, code);
+            if (msgEl) {
+                msgEl.textContent = data.quote.message || 'Promo applied.';
+                msgEl.className = 'small mt-1 text-success';
+            }
+            renderCartDrawer();
+        } catch (e) {
+            if (msgEl) {
+                msgEl.textContent = 'Could not apply promo. Try again.';
+                msgEl.className = 'small mt-1 text-danger';
+            }
+        }
+    }
+
+    function submitCartOrder(drawer) {
+        const ordersUrl = drawer?.dataset.ordersUrl;
+        if (!ordersUrl) {
+            showToast('Please login as a customer to place an order.');
+            return;
+        }
+
+        const items = getCartItems();
+        if (!items.length) {
+            showToast('Your cart is empty.');
+            return;
+        }
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = ordersUrl;
+        form.style.display = 'none';
+
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = drawer.dataset.csrf || '';
+        form.appendChild(csrf);
+
+        const cartField = document.createElement('input');
+        cartField.type = 'hidden';
+        cartField.name = 'cart_data';
+        cartField.value = JSON.stringify(items);
+        form.appendChild(cartField);
+
+        const promoField = document.createElement('input');
+        promoField.type = 'hidden';
+        promoField.name = 'promo_code';
+        promoField.value = (document.getElementById('cartPromoCode')?.value || localStorage.getItem(PROMO_CODE_KEY) || '').trim();
+        form.appendChild(promoField);
+
+        document.body.appendChild(form);
+        form.submit();
     }
 
     function getCartItems() {
@@ -521,13 +691,52 @@
             container.appendChild(itemCard);
         });
 
-        // Calculate delivery fee
-        const deliveryFee = subtotal > 4000 ? 0 : 250;
-        const total = subtotal + deliveryFee;
+        const discountRow = document.getElementById('cartDiscountRow');
+        const discountEl = document.getElementById('cartDiscount');
+        const promoLabel = document.getElementById('cartPromoLabel');
+        const promoInput = document.getElementById('cartPromoCode');
+
+        // Prefer server quote when a promo is applied; otherwise local defaults.
+        let deliveryFee = 250;
+        let discount = 0;
+        let total = subtotal + deliveryFee;
+
+        if (appliedPromoQuote && appliedPromoQuote.subtotal === subtotal) {
+            deliveryFee = appliedPromoQuote.delivery_fee;
+            discount = appliedPromoQuote.discount || 0;
+            total = appliedPromoQuote.total;
+            if (promoInput && appliedPromoQuote.promo_code) {
+                promoInput.value = appliedPromoQuote.promo_code;
+            }
+        } else if (appliedPromoQuote && appliedPromoQuote.promo_code && !window.__pfPromoRefreshing) {
+            // Cart changed after apply — re-quote asynchronously once
+            window.__pfPromoRefreshing = true;
+            applyPromoCode().finally(() => { window.__pfPromoRefreshing = false; });
+        } else {
+            // Auto free delivery threshold fallback (matches seeded free-delivery promo)
+            if (subtotal >= 5000) {
+                deliveryFee = 0;
+                total = subtotal;
+            }
+        }
 
         if (subtotalEl) subtotalEl.textContent = subtotal.toLocaleString();
         if (deliveryEl) deliveryEl.textContent = deliveryFee === 0 ? 'FREE' : deliveryFee.toLocaleString();
         if (totalEl) totalEl.textContent = total.toLocaleString();
+
+        if (discountRow && discountEl) {
+            if (discount > 0) {
+                discountRow.classList.remove('d-none');
+                discountEl.textContent = discount.toLocaleString();
+                if (promoLabel) {
+                    promoLabel.textContent = appliedPromoQuote?.promo_code
+                        ? `(${appliedPromoQuote.promo_code})`
+                        : '';
+                }
+            } else {
+                discountRow.classList.add('d-none');
+            }
+        }
 
         // Setup quantity and remove event listeners
         container.querySelectorAll('.btn-qty-plus').forEach(btn => {

@@ -123,6 +123,11 @@ return [
             'driver' => 'mongodb',
             'dsn' => env('MONGODB_URI', env('DB_URI')),
             'database' => env('MONGODB_DATABASE', env('DB_DATABASE', 'pizzaflow')),
+            'options' => [
+                'connectTimeoutMS' => 3000,
+                'serverSelectionTimeoutMS' => 5000,
+                'socketTimeoutMS' => 10000,
+            ],
         ],
 
     ],

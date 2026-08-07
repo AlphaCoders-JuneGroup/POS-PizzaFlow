@@ -48,6 +48,13 @@
             <i class="bi bi-pie-chart-fill"></i>
         </div>
     </div>
+    <script>
+        // Inline safety net: hide loader even if app.js fails to load
+        setTimeout(function () {
+            var el = document.getElementById('page-loader');
+            if (el) el.classList.add('hidden');
+        }, 2000);
+    </script>
 
     {{-- Sticky Navigation --}}
     @include('components.navbar')
@@ -68,6 +75,7 @@
         <script>
             localStorage.removeItem('pizzaflow_cart_items');
             localStorage.setItem('pizzaflow_cart_count', '0');
+            localStorage.removeItem('pizzaflow_promo_code');
         </script>
     @endif
 

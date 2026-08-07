@@ -689,6 +689,17 @@ section {
     color: var(--pf-white);
 }
 
+.pf-offer-4 {
+    background: linear-gradient(145deg, #9b2226, #e5989b);
+}
+
+.pf-offer-card .btn.is-claimed,
+.pf-promo-banner .btn.is-claimed {
+    opacity: 0.95;
+    pointer-events: none;
+    font-weight: 700;
+}
+
 .pf-offer-icon {
     font-size: 2rem;
     margin-bottom: 0.75rem;

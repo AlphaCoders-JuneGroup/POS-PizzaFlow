@@ -1,6 +1,10 @@
 {{-- Shopping Cart Drawer --}}
 <div class="pf-cart-drawer-overlay" id="cartDrawerOverlay"></div>
-<div class="pf-cart-drawer text-dark" id="cartDrawer">
+<div class="pf-cart-drawer text-dark" id="cartDrawer"
+     data-orders-url="{{ auth()->check() && auth()->user()->isCustomer() ? route('orders.store') : '' }}"
+     data-promo-url="{{ route('promotions.apply') }}"
+     data-guest-url="{{ route('guest.create') }}"
+     data-csrf="{{ csrf_token() }}">
     <div class="pf-cart-drawer-header d-flex justify-content-between align-items-center p-3 border-bottom border-light-subtle">
         <h4 class="mb-0 fs-5 font-poppins d-flex align-items-center gap-2">
             <i class="bi bi-cart3 text-pf-primary"></i>
@@ -21,10 +25,24 @@
 
     {{-- Cart Footer / Summary --}}
     <div class="pf-cart-drawer-footer p-3 border-top border-light-subtle bg-light d-none" id="cartDrawerFooter">
+        <div class="mb-3">
+            <label class="form-label small text-muted mb-1" for="cartPromoCode">Promo code</label>
+            <div class="input-group input-group-sm">
+                <input type="text" id="cartPromoCode" class="form-control pf-input"
+                       placeholder="e.g. FLOW20" maxlength="40" autocomplete="off">
+                <button type="button" class="btn btn-pf-outline" id="cartApplyPromoBtn">Apply</button>
+            </div>
+            <div class="small mt-1" id="cartPromoMessage"></div>
+        </div>
+
         <div class="d-flex flex-column gap-2 mb-3">
             <div class="d-flex justify-content-between align-items-center">
                 <span class="text-muted small">Subtotal</span>
                 <span class="fw-bold">Rs. <span id="cartSubtotal">0</span></span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center d-none" id="cartDiscountRow">
+                <span class="text-muted small">Discount <span id="cartPromoLabel"></span></span>
+                <span class="fw-bold text-success">- Rs. <span id="cartDiscount">0</span></span>
             </div>
             <div class="d-flex justify-content-between align-items-center">
                 <span class="text-muted small">Delivery Fee</span>
