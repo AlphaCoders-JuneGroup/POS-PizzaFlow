@@ -5,11 +5,15 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeliveryDispatchController;
 use App\Http\Controllers\GuestCheckoutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InventoryManagementController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PromoCodeController;
+use App\Http\Controllers\PromotionManagementController;
+use App\Http\Controllers\StaffNotificationController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +26,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/privacy-policy', [PageController::class, 'privacy'])->name('privacy');
 Route::get('/terms-of-service', [PageController::class, 'terms'])->name('terms');
+Route::post('/promotions/apply', [PromoCodeController::class, 'apply'])->name('promotions.apply');
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +54,12 @@ Route::post('/guest-checkout/clear', [GuestCheckoutController::class, 'destroy']
 */
 Route::middleware('auth')->group(function () {
     Route::post('/logout', LogoutController::class)->name('logout');
+
+    // Staff notifications (dashboard bell)
+    Route::post('/dashboard/notifications/read-all', [StaffNotificationController::class, 'markAllRead'])
+        ->name('notifications.read-all');
+    Route::post('/dashboard/notifications/{notification}/read', [StaffNotificationController::class, 'markRead'])
+        ->name('notifications.read');
 
     // Customer profile & addresses
     Route::middleware('role:'.UserRole::Customer->value.'|'.UserRole::Admin->value)->group(function () {
@@ -116,5 +127,31 @@ Route::middleware('auth')->group(function () {
         Route::patch('/dashboard/inventory/{ingredient}/toggle', [InventoryManagementController::class, 'toggleStock'])->name('admin.inventory.toggle');
         Route::post('/dashboard/inventory/{ingredient}/restock', [InventoryManagementController::class, 'restock'])->name('admin.inventory.restock');
         Route::post('/dashboard/inventory/{ingredient}/adjust', [InventoryManagementController::class, 'adjust'])->name('admin.inventory.adjust');
+
+        // Promotions & Offers
+        Route::get('/dashboard/promotions', [PromotionManagementController::class, 'index'])->name('promotions.index');
+        Route::post('/dashboard/promotions', [PromotionManagementController::class, 'store'])->name('promotions.store');
+        Route::put('/dashboard/promotions/{promotion}', [PromotionManagementController::class, 'update'])->name('promotions.update');
+        Route::patch('/dashboard/promotions/{promotion}/toggle', [PromotionManagementController::class, 'toggle'])->name('promotions.toggle');
+        Route::delete('/dashboard/promotions/{promotion}', [PromotionManagementController::class, 'destroy'])->name('promotions.destroy');
     });
+
+    // Delivery & Dispatch (Admin, Store Manager, Delivery Driver)
+    Route::middleware('role:'.UserRole::Admin->value.'|'.UserRole::StoreManager->value.'|'.UserRole::DeliveryDriver->value)
+        ->prefix('dashboard/delivery')
+        ->name('delivery.')
+        ->group(function () {
+            Route::get('/', [DeliveryDispatchController::class, 'index'])->name('index');
+            Route::get('/{order}', [DeliveryDispatchController::class, 'show'])->name('show');
+            Route::put('/{order}/instructions', [DeliveryDispatchController::class, 'updateInstructions'])->name('instructions');
+            Route::post('/{order}/start', [DeliveryDispatchController::class, 'start'])->name('start');
+            Route::post('/{order}/complete', [DeliveryDispatchController::class, 'complete'])->name('complete');
+
+            Route::middleware('role:'.UserRole::Admin->value.'|'.UserRole::StoreManager->value)->group(function () {
+                Route::post('/drivers', [DeliveryDispatchController::class, 'storeDriver'])->name('drivers.store');
+                Route::post('/{order}/assign', [DeliveryDispatchController::class, 'assign'])->name('assign');
+                Route::post('/{order}/auto-assign', [DeliveryDispatchController::class, 'autoAssign'])->name('auto-assign');
+                Route::post('/{order}/unassign', [DeliveryDispatchController::class, 'unassign'])->name('unassign');
+            });
+        });
 });

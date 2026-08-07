@@ -18,6 +18,55 @@
     --sidebar-width: 280px;
 }
 
+/* Shared controls (kept local so dashboard does not load homepage CSS) */
+.btn-pf-primary {
+    background: linear-gradient(135deg, var(--dash-primary), #ff5a65);
+    border: none;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(230, 57, 70, 0.3);
+}
+
+.btn-pf-primary:hover,
+.btn-pf-primary:focus {
+    background: linear-gradient(135deg, #c1121f, var(--dash-primary));
+    color: #fff;
+}
+
+.btn-pf-outline {
+    background: transparent;
+    border: 1.5px solid var(--dash-primary);
+    color: var(--dash-primary);
+}
+
+.btn-pf-outline:hover,
+.btn-pf-outline:focus {
+    background: var(--dash-primary);
+    color: #fff;
+}
+
+.pf-input {
+    border-radius: 0.85rem;
+    border: 1px solid rgba(31, 41, 55, 0.12);
+    padding: 0.75rem 1rem;
+    background: #fff;
+}
+
+.pf-input:focus {
+    border-color: var(--dash-primary);
+    box-shadow: 0 0 0 0.2rem rgba(230, 57, 70, 0.15);
+}
+
+.pf-alert {
+    border: none;
+    border-radius: 0.85rem;
+}
+
+.pf-field-error {
+    color: #dc2626;
+    font-size: 0.82rem;
+    margin-top: 0.35rem;
+}
+
 .pf-dash-body {
     margin: 0;
     font-family: 'Poppins', system-ui, sans-serif;
@@ -184,6 +233,97 @@
     color: var(--dash-text);
     display: grid;
     place-items: center;
+}
+
+.pf-notify-menu {
+    width: min(360px, 92vw);
+    padding: 0;
+    border: 1px solid var(--dash-border);
+    border-radius: 1rem;
+    box-shadow: var(--dash-shadow);
+    overflow: hidden;
+}
+
+.pf-notify-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--dash-border);
+    background: #fff;
+}
+
+.pf-notify-head .btn-link {
+    text-decoration: none;
+    color: var(--dash-primary);
+    font-weight: 600;
+}
+
+.pf-notify-list {
+    max-height: 360px;
+    overflow-y: auto;
+    background: #fff;
+}
+
+.pf-notify-item-form {
+    margin: 0;
+    border-bottom: 1px solid rgba(31, 41, 55, 0.06);
+}
+
+.pf-notify-item {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    display: flex;
+    gap: 0.75rem;
+    text-align: left;
+    padding: 0.85rem 1rem;
+}
+
+.pf-notify-item:hover {
+    background: rgba(230, 57, 70, 0.05);
+}
+
+.pf-notify-item.is-unread {
+    background: rgba(230, 57, 70, 0.08);
+}
+
+.pf-notify-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(230, 57, 70, 0.12);
+    color: var(--dash-primary);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.pf-notify-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.pf-notify-body strong {
+    font-size: 0.9rem;
+    color: var(--dash-text);
+}
+
+.pf-notify-body small,
+.pf-notify-body em {
+    font-style: normal;
+    color: var(--dash-muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.pf-notify-empty {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    font-size: 0.9rem;
 }
 
 .pf-dash-badge {
@@ -595,5 +735,18 @@
     color: #ffffff !important;
     font-weight: 600;
     box-shadow: 0 4px 15px rgba(230, 57, 70, 0.25);
+}
+
+/* ---------- Delivery & Dispatch ---------- */
+.pf-delivery-card:first-of-type {
+    border-top: 0 !important;
+}
+
+.pf-route-steps {
+    padding-left: 1.25rem;
+}
+
+.pf-route-steps li + li {
+    margin-top: 1rem;
 }
 
