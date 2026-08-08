@@ -35,14 +35,24 @@ class DeliveryDispatchSeeder extends Seeder
         $samples = [
             [
                 'order_number' => 'PF-D1001',
-                'status' => 'preparing',
+                'status' => 'received',
+                'fulfillment_type' => 'delivery',
                 'delivery_address' => '42 Flower Road',
                 'delivery_city' => 'Colombo',
                 'delivery_landmark' => 'Near the park',
                 'delivery_instructions' => 'Ring the doorbell. Leave at the gate if no answer.',
                 'items' => [
-                    ['name' => 'Pepperoni Feast', 'qty' => 1, 'price' => 2290],
-                    ['name' => 'Garlic Bread', 'qty' => 1, 'price' => 650],
+                    [
+                        'name' => 'Pepperoni Feast [Large | Stuffed Crust | Extra Pepperoni, Jalapeños]',
+                        'base_name' => 'Pepperoni Feast',
+                        'qty' => 1,
+                        'price' => 2290,
+                        'size' => 'Large',
+                        'crust' => 'Stuffed Crust',
+                        'toppings' => ['Extra Pepperoni', 'Jalapeños'],
+                        'kds_status' => 'pending',
+                    ],
+                    ['name' => 'Garlic Bread', 'base_name' => 'Garlic Bread', 'qty' => 1, 'price' => 650, 'kds_status' => 'pending'],
                 ],
                 'subtotal' => 2940,
                 'delivery_fee' => 250,
@@ -52,13 +62,24 @@ class DeliveryDispatchSeeder extends Seeder
             ],
             [
                 'order_number' => 'PF-D1002',
-                'status' => 'preparing',
+                'status' => 'baking',
+                'fulfillment_type' => 'delivery',
                 'delivery_address' => '18 High Level Road',
                 'delivery_city' => 'Nugegoda',
                 'delivery_landmark' => 'Opposite the bus stand',
                 'delivery_instructions' => 'Call on arrival. Apartment 3B.',
                 'items' => [
-                    ['name' => 'Truffle Mushroom', 'qty' => 2, 'price' => 2690],
+                    [
+                        'name' => 'Truffle Mushroom [Medium | Classic Thin | Extra Cheese | White Sauce]',
+                        'base_name' => 'Truffle Mushroom',
+                        'qty' => 2,
+                        'price' => 2690,
+                        'size' => 'Medium',
+                        'crust' => 'Classic Thin',
+                        'sauce' => 'White Sauce',
+                        'toppings' => ['Extra Cheese'],
+                        'kds_status' => 'baking',
+                    ],
                 ],
                 'subtotal' => 5380,
                 'delivery_fee' => 0,
@@ -68,7 +89,8 @@ class DeliveryDispatchSeeder extends Seeder
             ],
             [
                 'order_number' => 'PF-D1003',
-                'status' => 'preparing',
+                'status' => 'ready',
+                'fulfillment_type' => 'delivery',
                 'delivery_address' => '7 Marine Drive',
                 'delivery_city' => 'Dehiwala',
                 'delivery_landmark' => 'Blue gate house',
@@ -85,6 +107,7 @@ class DeliveryDispatchSeeder extends Seeder
             [
                 'order_number' => 'PF-D1004',
                 'status' => 'out_for_delivery',
+                'fulfillment_type' => 'delivery',
                 'delivery_address' => '55 Bauddhaloka Mawatha',
                 'delivery_city' => 'Colombo',
                 'delivery_landmark' => 'Office lobby',
@@ -115,6 +138,7 @@ class DeliveryDispatchSeeder extends Seeder
                 'delivery_fee' => $sample['delivery_fee'],
                 'total' => $sample['total'],
                 'status' => $sample['status'],
+                'fulfillment_type' => $sample['fulfillment_type'] ?? 'delivery',
                 'payment_method' => 'Cash on Delivery',
                 'payment_status' => 'Pending',
                 'delivery_address' => $sample['delivery_address'],
@@ -131,6 +155,7 @@ class DeliveryDispatchSeeder extends Seeder
                 'route_eta_minutes' => $sample['driver_id'] ? $route['eta_minutes'] : null,
                 'route_summary' => $sample['driver_id'] ? $route['summary'] : null,
                 'placed_at' => $sample['placed_at'],
+                'status_updated_at' => now(),
             ];
 
             Order::updateOrCreate(
@@ -139,15 +164,48 @@ class DeliveryDispatchSeeder extends Seeder
             );
         }
 
-        // Enrich older sample orders with city/customer fields for dispatch UI.
+        // Pickup sample + editable received order
+        Order::updateOrCreate(
+            ['order_number' => 'PF-P2001'],
+            [
+                'user_id' => $customer->_id,
+                'items' => [[
+                    'name' => 'Margherita Classic [Personal | Classic Thin | Fresh Basil, Extra Mozzarella]',
+                    'base_name' => 'Margherita Classic',
+                    'qty' => 1,
+                    'price' => 1890,
+                    'size' => 'Personal',
+                    'crust' => 'Classic Thin',
+                    'toppings' => ['Fresh Basil', 'Extra Mozzarella'],
+                    'kds_status' => 'pending',
+                ]],
+                'subtotal' => 1890,
+                'delivery_fee' => 0,
+                'discount' => 0,
+                'total' => 1890,
+                'status' => 'preparing',
+                'fulfillment_type' => 'pickup',
+                'payment_method' => 'Cash on Delivery',
+                'payment_status' => 'Pending',
+                'delivery_address' => 'Pickup',
+                'customer_name' => $customer->name,
+                'customer_phone' => $customer->phone,
+                'notes' => 'Will collect in 20 minutes — light on sauce',
+                'placed_at' => now()->subMinutes(8),
+                'status_updated_at' => now(),
+            ]
+        );
+
         Order::where('order_number', 'PF-10045')->update([
             'delivery_city' => 'Colombo',
             'delivery_landmark' => 'Near the park',
             'delivery_instructions' => 'Ring the doorbell',
             'customer_name' => $customer->name,
             'customer_phone' => $customer->phone,
-            'status' => 'preparing',
+            'status' => 'received',
+            'fulfillment_type' => 'delivery',
             'driver_id' => null,
+            'status_updated_at' => now(),
         ]);
     }
 }

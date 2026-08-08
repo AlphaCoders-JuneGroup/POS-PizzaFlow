@@ -12,10 +12,18 @@ class DeliveryDispatch
     public const STORE_LOCATION = 'PizzaFlow Kitchen, Galle Road, Colombo';
 
     /** @var list<string> */
-    public const ACTIVE_STATUSES = ['pending', 'preparing', 'out_for_delivery'];
+    public const ACTIVE_STATUSES = [
+        'received',
+        'pending',
+        'preparing',
+        'baking',
+        'ready',
+        'out_for_delivery',
+    ];
 
+    /** Ready for driver assignment */
     /** @var list<string> */
-    public const DISPATCHABLE_STATUSES = ['pending', 'preparing'];
+    public const DISPATCHABLE_STATUSES = ['ready'];
 
     /**
      * Suggest the best available driver for an order based on zone match and workload.
