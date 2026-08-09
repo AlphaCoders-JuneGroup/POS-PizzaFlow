@@ -38,32 +38,96 @@
         <div class="pf-dash-summary">
             <div class="pf-dash-summary-icon tone-red"><i class="bi bi-truck"></i></div>
             <div>
-                <span>OUT FOR DELIVERY</span>
+                <span>{{ $isDriver ? 'OUT NOW' : 'OUT FOR DELIVERY' }}</span>
                 <strong>{{ $stats['out'] }}</strong>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="pf-dash-summary">
-            <div class="pf-dash-summary-icon tone-gold"><i class="bi bi-people"></i></div>
+            <div class="pf-dash-summary-icon tone-gold"><i class="bi {{ $isDriver ? 'bi-check2-circle' : 'bi-people' }}"></i></div>
             <div>
-                <span>ACTIVE DRIVERS</span>
-                <strong>{{ $stats['drivers'] }}</strong>
+                <span>{{ $isDriver ? 'DONE TODAY' : 'ACTIVE DRIVERS' }}</span>
+                <strong>{{ $isDriver ? $completedToday : $stats['drivers'] }}</strong>
             </div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="pf-dash-summary">
-            <div class="pf-dash-summary-icon tone-red"><i class="bi bi-geo-alt"></i></div>
+            <div class="pf-dash-summary-icon tone-red"><i class="bi bi-box-seam"></i></div>
             <div>
-                <span>{{ $isDriver ? 'DONE TODAY' : 'ACTIVE RUNS' }}</span>
-                <strong>{{ $isDriver ? $completedToday : $stats['active'] }}</strong>
+                <span>{{ $isDriver ? 'MY DELIVERED' : 'DELIVERED' }}</span>
+                <strong>{{ $stats['delivered'] ?? 0 }}</strong>
             </div>
         </div>
     </div>
 </div>
 
 @if ($isDriver)
+    <div class="pf-dash-panel mb-4 p-2">
+        <ul class="nav nav-pills pf-dash-pills" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link {{ $tab === 'mine' ? 'active' : '' }}" href="{{ route('delivery.index', ['tab' => 'mine']) }}">
+                    <i class="bi bi-truck me-1"></i> My Active
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $tab === 'delivered' ? 'active' : '' }}" href="{{ route('delivery.index', ['tab' => 'delivered']) }}">
+                    <i class="bi bi-check2-circle me-1"></i> Delivered
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    @if ($tab === 'delivered')
+        <div class="pf-dash-panel">
+            <div class="pf-dash-panel-head">
+                <h3>My completed deliveries</h3>
+                <span class="text-muted small">{{ $deliveredOrders->count() }} shown</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table pf-dash-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Customer</th>
+                            <th>Drop-off</th>
+                            <th>Delivered</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($deliveredOrders as $order)
+                            <tr>
+                                <td>
+                                    <strong>{{ $order->order_number }}</strong>
+                                    <div class="text-muted small">{{ $order->itemSummary() }}</div>
+                                </td>
+                                <td>
+                                    <div>{{ $order->customer_name ?: '—' }}</div>
+                                    <div class="text-muted small">{{ $order->customer_phone ?: '—' }}</div>
+                                </td>
+                                <td>{{ $order->destinationLabel() }}</td>
+                                <td>
+                                    <span class="badge text-bg-success">Delivered</span>
+                                    <div class="text-muted small">
+                                        {{ optional($order->delivered_at)->diffForHumans() ?? '—' }}
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ route('delivery.show', $order) }}" class="btn btn-sm btn-pf-outline">Details</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No delivered orders yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @else
     <div class="pf-dash-panel">
         <div class="pf-dash-panel-head">
             <h3>My Delivery Routes</h3>
@@ -142,6 +206,7 @@
             </div>
         @endforelse
     </div>
+    @endif
 @else
     <div class="pf-dash-panel mb-4 p-2">
         <ul class="nav nav-pills pf-dash-pills" role="tablist">
@@ -153,6 +218,11 @@
             <li class="nav-item">
                 <a class="nav-link {{ $tab === 'active' ? 'active' : '' }}" href="{{ route('delivery.index', ['tab' => 'active']) }}">
                     <i class="bi bi-truck me-1"></i> Active Deliveries
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $tab === 'delivered' ? 'active' : '' }}" href="{{ route('delivery.index', ['tab' => 'delivered']) }}">
+                    <i class="bi bi-check2-circle me-1"></i> Delivered
                 </a>
             </li>
             <li class="nav-item">
@@ -300,6 +370,62 @@
                         @empty
                             <tr>
                                 <td colspan="5" class="text-center text-muted py-4">No active deliveries.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @elseif ($tab === 'delivered')
+        <div class="pf-dash-panel">
+            <div class="pf-dash-panel-head">
+                <h3>Delivered orders</h3>
+                <span class="text-muted small">{{ $deliveredOrders->count() }} recent · {{ $stats['delivered'] ?? 0 }} total</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table pf-dash-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Customer</th>
+                            <th>Driver</th>
+                            <th>Drop-off</th>
+                            <th>Delivered at</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($deliveredOrders as $order)
+                            <tr>
+                                <td>
+                                    <strong>{{ $order->order_number }}</strong>
+                                    <div class="text-muted small">{{ \Illuminate\Support\Str::limit($order->itemSummary(), 40) }}</div>
+                                </td>
+                                <td>
+                                    <div>{{ $order->customer_name ?: '—' }}</div>
+                                    <div class="text-muted small">{{ $order->customer_phone ?: '—' }}</div>
+                                </td>
+                                <td>{{ optional($order->driver)->name ?? '—' }}</td>
+                                <td>
+                                    <div>{{ $order->destinationLabel() }}</div>
+                                    @if ($order->route_distance_km)
+                                        <div class="text-muted small">{{ number_format($order->route_distance_km, 1) }} km</div>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge text-bg-success">Delivered</span>
+                                    <div class="text-muted small">
+                                        {{ optional($order->delivered_at)->format('M j, g:i A') ?? '—' }}
+                                    </div>
+                                    <div class="text-muted small">{{ optional($order->delivered_at)->diffForHumans() }}</div>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ route('delivery.show', $order) }}" class="btn btn-sm btn-pf-outline">Details</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No delivered orders yet.</td>
                             </tr>
                         @endforelse
                     </tbody>

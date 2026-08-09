@@ -37,6 +37,11 @@ class OrderManagementController extends Controller
             $orders = $orders->filter(
                 fn (Order $order) => in_array($order->normalizedStatus(), Order::OPEN_STATUSES, true)
             )->values();
+        } elseif ($status === Order::STATUS_DELIVERED) {
+            $orders = $orders->filter(
+                fn (Order $order) => $order->normalizedStatus() === Order::STATUS_DELIVERED
+            )->sortByDesc(fn (Order $order) => optional($order->delivered_at ?? $order->status_updated_at ?? $order->placed_at)->timestamp ?? 0)
+                ->values();
         } elseif ($status !== '' && $status !== 'all') {
             $orders = $orders->filter(
                 fn (Order $order) => $order->normalizedStatus() === $status
@@ -62,13 +67,13 @@ class OrderManagementController extends Controller
         $all = Order::all();
         $counts = [
             'open' => $all->filter(fn (Order $o) => in_array($o->normalizedStatus(), Order::OPEN_STATUSES, true))->count(),
-            'received' => $all->filter(fn (Order $o) => in_array($o->normalizedStatus(), [Order::STATUS_RECEIVED], true))->count(),
-            'preparing' => $all->where('status', Order::STATUS_PREPARING)->count(),
-            'baking' => $all->where('status', Order::STATUS_BAKING)->count(),
-            'ready' => $all->where('status', Order::STATUS_READY)->count(),
-            'out_for_delivery' => $all->where('status', Order::STATUS_OUT)->count(),
-            'delivered' => $all->where('status', Order::STATUS_DELIVERED)->count(),
-            'cancelled' => $all->where('status', Order::STATUS_CANCELLED)->count(),
+            'received' => $all->filter(fn (Order $o) => $o->normalizedStatus() === Order::STATUS_RECEIVED)->count(),
+            'preparing' => $all->filter(fn (Order $o) => $o->normalizedStatus() === Order::STATUS_PREPARING)->count(),
+            'baking' => $all->filter(fn (Order $o) => $o->normalizedStatus() === Order::STATUS_BAKING)->count(),
+            'ready' => $all->filter(fn (Order $o) => $o->normalizedStatus() === Order::STATUS_READY)->count(),
+            'out_for_delivery' => $all->filter(fn (Order $o) => $o->normalizedStatus() === Order::STATUS_OUT)->count(),
+            'delivered' => $all->filter(fn (Order $o) => $o->normalizedStatus() === Order::STATUS_DELIVERED)->count(),
+            'cancelled' => $all->filter(fn (Order $o) => $o->normalizedStatus() === Order::STATUS_CANCELLED)->count(),
         ];
 
         return view('dashboard.orders.index', array_merge($this->dashboardData(), [

@@ -24,20 +24,28 @@ class DeliveryDispatchController extends Controller
         $tab = $request->get('tab', $isDriver ? 'mine' : 'queue');
 
         if ($isDriver) {
+            $tab = in_array($tab, ['mine', 'delivered'], true) ? $tab : 'mine';
+
             $myDeliveries = Order::where('driver_id', (string) $user->_id)
                 ->whereIn('status', DeliveryDispatch::ACTIVE_STATUSES)
                 ->orderBy('assigned_at')
                 ->get();
 
-            $completedToday = Order::where('driver_id', (string) $user->_id)
-                ->where('status', 'delivered')
-                ->where('delivered_at', '>=', now()->startOfDay())
+            $deliveredOrders = Order::where('driver_id', (string) $user->_id)
+                ->where('status', Order::STATUS_DELIVERED)
+                ->orderBy('delivered_at', 'desc')
+                ->limit(40)
+                ->get();
+
+            $completedToday = $deliveredOrders
+                ->filter(fn (Order $o) => $o->delivered_at && $o->delivered_at->gte(now()->startOfDay()))
                 ->count();
 
             return view('dashboard.delivery.index', array_merge($this->dashboardData(), [
                 'isDriver' => true,
-                'tab' => 'mine',
+                'tab' => $tab,
                 'myDeliveries' => $myDeliveries,
+                'deliveredOrders' => $deliveredOrders,
                 'completedToday' => $completedToday,
                 'queueOrders' => collect(),
                 'activeDeliveries' => collect(),
@@ -49,68 +57,74 @@ class DeliveryDispatchController extends Controller
                     'active' => $myDeliveries->count(),
                     'drivers' => 0,
                     'out' => $myDeliveries->where('status', 'out_for_delivery')->count(),
+                    'delivered' => $deliveredOrders->count(),
                 ],
             ]));
         }
 
-        $tab = in_array($tab, ['queue', 'active', 'drivers'], true) ? $tab : 'queue';
+        $tab = in_array($tab, ['queue', 'active', 'delivered', 'drivers'], true) ? $tab : 'queue';
 
         // 2 queries total for drivers + their workloads (avoids N+1 Atlas hits).
         $drivers = DeliveryDispatch::activeDrivers();
         $driverLoads = DeliveryDispatch::driverLoads($drivers);
 
-        $queueOrders = collect();
-        $activeDeliveries = collect();
+        $liveOrders = Order::with('driver')
+            ->whereIn('status', DeliveryDispatch::ACTIVE_STATUSES)
+            ->orderBy('placed_at')
+            ->get();
+
+        $queueOrders = $liveOrders
+            ->filter(fn (Order $order) => $order->isAssignable())
+            ->values();
+
+        $activeDeliveries = $liveOrders
+            ->filter(fn (Order $order) => $order->isActiveDelivery())
+            ->sortBy('assigned_at')
+            ->values();
+
         $suggestedDrivers = [];
-
-        if ($tab === 'queue' || $tab === 'active') {
-            $liveOrders = Order::with('driver')
-                ->whereIn('status', DeliveryDispatch::ACTIVE_STATUSES)
-                ->orderBy('placed_at')
-                ->get();
-
-            $queueOrders = $liveOrders
-                ->filter(fn (Order $order) => $order->isAssignable())
-                ->values();
-
-            $activeDeliveries = $liveOrders
-                ->filter(fn (Order $order) => $order->isActiveDelivery())
-                ->sortBy('assigned_at')
-                ->values();
-
-            if ($tab === 'queue') {
-                foreach ($queueOrders as $order) {
-                    $suggestedDrivers[(string) $order->_id] = DeliveryDispatch::suggestDriver(
-                        $order,
-                        $drivers,
-                        $driverLoads
-                    );
-                }
-                $activeDeliveries = collect();
-            } else {
-                $queueOrders = collect();
+        if ($tab === 'queue') {
+            foreach ($queueOrders as $order) {
+                $suggestedDrivers[(string) $order->_id] = DeliveryDispatch::suggestDriver(
+                    $order,
+                    $drivers,
+                    $driverLoads
+                );
             }
         }
 
-        $activeFromLoads = array_sum(array_column($driverLoads, 'active_count'));
+        $deliveredOrders = collect();
+        if ($tab === 'delivered') {
+            $deliveredOrders = Order::with('driver')
+                ->where('status', Order::STATUS_DELIVERED)
+                ->orderBy('delivered_at', 'desc')
+                ->limit(50)
+                ->get()
+                ->filter(fn (Order $order) => $order->fulfillmentType() === 'delivery')
+                ->values();
+        }
+
+        $deliveredCount = Order::where('status', Order::STATUS_DELIVERED)->get()
+            ->filter(fn (Order $order) => $order->fulfillmentType() === 'delivery')
+            ->count();
 
         return view('dashboard.delivery.index', array_merge($this->dashboardData(), [
             'isDriver' => false,
             'tab' => $tab,
-            'queueOrders' => $queueOrders,
-            'activeDeliveries' => $activeDeliveries,
+            'queueOrders' => $tab === 'queue' ? $queueOrders : collect(),
+            'activeDeliveries' => $tab === 'active' ? $activeDeliveries : collect(),
+            'deliveredOrders' => $deliveredOrders,
             'myDeliveries' => collect(),
             'completedToday' => 0,
             'drivers' => $drivers,
             'driverLoads' => $driverLoads,
             'suggestedDrivers' => $suggestedDrivers,
             'stats' => [
-                'queue' => $tab === 'queue' ? $queueOrders->count() : 0,
-                'active' => $tab === 'active' ? $activeDeliveries->count() : $activeFromLoads,
+                'queue' => $queueOrders->count(),
+                'active' => $activeDeliveries->count(),
                 'drivers' => $drivers->count(),
-                'out' => $tab === 'active'
-                    ? $activeDeliveries->where('status', 'out_for_delivery')->count()
-                    : 0,
+                'out' => $activeDeliveries->where('status', 'out_for_delivery')->count(),
+                'delivered' => $deliveredCount,
             ],
         ]));
     }
