@@ -48,14 +48,44 @@
             <i class="bi bi-pie-chart-fill"></i>
         </div>
     </div>
+    <script>
+        // Inline safety net: hide loader even if app.js fails to load
+        setTimeout(function () {
+            var el = document.getElementById('page-loader');
+            if (el) el.classList.add('hidden');
+        }, 2000);
+    </script>
 
     {{-- Sticky Navigation --}}
     @include('components.navbar')
+
+    @if (session('success'))
+        <div class="container mt-3">
+            <div class="alert alert-success pf-alert">{{ session('success') }}</div>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="container mt-3">
+            <div class="alert alert-danger pf-alert">{{ session('error') }}</div>
+        </div>
+    @endif
+
+    @if (session('clear_cart'))
+        <script>
+            localStorage.removeItem('pizzaflow_cart_items');
+            localStorage.setItem('pizzaflow_cart_count', '0');
+            localStorage.removeItem('pizzaflow_promo_code');
+        </script>
+    @endif
 
     {{-- Main Content --}}
     <main id="main-content">
         @yield('content')
     </main>
+
+    {{-- Shopping Cart Drawer --}}
+    @include('components.cart-drawer')
 
     {{-- Footer --}}
     @include('components.footer')

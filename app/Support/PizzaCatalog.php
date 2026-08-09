@@ -11,6 +11,28 @@ class PizzaCatalog
      */
     public static function all(): array
     {
+        try {
+            $category = \App\Models\Category::where('slug', 'pizza')->first();
+            if ($category) {
+                $items = \App\Models\MenuItem::where('category_id', $category->_id)
+                    ->where('is_active', true)
+                    ->get();
+
+                if ($items->isNotEmpty()) {
+                    return $items->map(fn ($item) => [
+                        'slug' => $item->slug,
+                        'name' => $item->name,
+                        'description' => $item->description,
+                        'price' => $item->price,
+                        'rating' => $item->rating,
+                        'image' => $item->image,
+                    ])->all();
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fallback to static array on error
+        }
+
         return [
             [
                 'slug' => 'margherita-classic',
@@ -81,6 +103,25 @@ class PizzaCatalog
 
     public static function find(string $slug): ?array
     {
+        try {
+            $item = \App\Models\MenuItem::where('slug', $slug)
+                ->where('is_active', true)
+                ->first();
+
+            if ($item) {
+                return [
+                    'slug' => $item->slug,
+                    'name' => $item->name,
+                    'description' => $item->description,
+                    'price' => $item->price,
+                    'rating' => $item->rating,
+                    'image' => $item->image,
+                ];
+            }
+        } catch (\Throwable $e) {
+            // Fallback to static array on error
+        }
+
         foreach (self::all() as $pizza) {
             if ($pizza['slug'] === $slug) {
                 return $pizza;

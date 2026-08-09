@@ -49,12 +49,33 @@ class UserSeeder extends Seeder
                 'phone' => '+94779876543',
                 'role' => UserRole::DeliveryDriver,
                 'password' => 'Password123!',
+                'service_zone' => 'Colombo',
+            ],
+            [
+                'name' => 'Sahan Driver',
+                'email' => 'driver2@pizzaflow.com',
+                'phone' => '+94771112233',
+                'role' => UserRole::DeliveryDriver,
+                'password' => 'Password123!',
+                'service_zone' => 'Nugegoda',
             ],
         ];
 
         foreach ($users as $data) {
             $password = $data['password'];
-            unset($data['password']);
+            $serviceZone = $data['service_zone'] ?? null;
+            unset($data['password'], $data['service_zone']);
+
+            $preferences = [
+                'preferred_crust' => 'classic',
+                'spice_level' => 'medium',
+                'allergies' => '',
+                'delivery_notes' => 'Ring the doorbell',
+            ];
+
+            if ($serviceZone) {
+                $preferences['service_zone'] = $serviceZone;
+            }
 
             $user = User::updateOrCreate(
                 ['email' => $data['email']],
@@ -62,12 +83,7 @@ class UserSeeder extends Seeder
                     ...$data,
                     'password' => $password,
                     'is_active' => true,
-                    'preferences' => [
-                        'preferred_crust' => 'classic',
-                        'spice_level' => 'medium',
-                        'allergies' => '',
-                        'delivery_notes' => 'Ring the doorbell',
-                    ],
+                    'preferences' => $preferences,
                 ]
             );
 

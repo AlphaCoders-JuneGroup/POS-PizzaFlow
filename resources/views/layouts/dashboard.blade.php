@@ -9,10 +9,11 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍕</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     @stack('styles')
 </head>
@@ -84,10 +85,58 @@
                     <button type="button" class="pf-dash-icon-btn" onclick="window.location.reload()" aria-label="Refresh">
                         <i class="bi bi-arrow-clockwise"></i>
                     </button>
-                    <button type="button" class="pf-dash-icon-btn" aria-label="Notifications">
-                        <i class="bi bi-bell"></i>
-                        <span class="pf-dash-badge">3</span>
-                    </button>
+
+                    @php
+                        $notifications = $notifications ?? collect();
+                        $unreadNotifications = $unreadNotifications ?? 0;
+                    @endphp
+
+                    <div class="dropdown">
+                        <button type="button"
+                                class="pf-dash-icon-btn"
+                                id="dashNotifyBtn"
+                                data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside"
+                                aria-expanded="false"
+                                aria-label="Notifications">
+                            <i class="bi bi-bell"></i>
+                            @if ($unreadNotifications > 0)
+                                <span class="pf-dash-badge">{{ $unreadNotifications > 9 ? '9+' : $unreadNotifications }}</span>
+                            @endif
+                        </button>
+
+                        <div class="dropdown-menu dropdown-menu-end pf-notify-menu" aria-labelledby="dashNotifyBtn">
+                            <div class="pf-notify-head">
+                                <strong>Notifications</strong>
+                                @if ($unreadNotifications > 0)
+                                    <form method="POST" action="{{ route('notifications.read-all') }}">
+                                        @csrf
+                                        <button type="submit" class="btn btn-link btn-sm p-0">Mark all read</button>
+                                    </form>
+                                @endif
+                            </div>
+
+                            <div class="pf-notify-list">
+                                @forelse ($notifications as $note)
+                                    <form method="POST" action="{{ route('notifications.read', $note->_id) }}" class="pf-notify-item-form">
+                                        @csrf
+                                        <button type="submit" class="pf-notify-item {{ $note->isUnread() ? 'is-unread' : '' }}">
+                                            <span class="pf-notify-icon"><i class="bi {{ $note->icon() }}"></i></span>
+                                            <span class="pf-notify-body">
+                                                <strong>{{ $note->title }}</strong>
+                                                <small>{{ $note->body }}</small>
+                                                <em>{{ optional($note->created_at)->diffForHumans() }}</em>
+                                            </span>
+                                        </button>
+                                    </form>
+                                @empty
+                                    <div class="pf-notify-empty text-muted">
+                                        No notifications yet.
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="pf-dash-userchip">
                         <span class="pf-dash-avatar">{{ strtoupper(substr($user->name, 0, 1)) }}</span>

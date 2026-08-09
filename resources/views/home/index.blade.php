@@ -7,11 +7,12 @@
     {{-- Hero --}}
     @include('components.hero')
 
-    {{-- Featured Categories --}}
-    @include('components.categories')
-
-    {{-- Featured Pizzas --}}
-    @include('components.featured-pizzas')
+    {{-- Featured Pizzas / Dynamic Menu --}}
+    @include('components.featured-pizzas', [
+        'featuredPizzas' => $featuredPizzas,
+        'menuItems' => $menuItems,
+        'categories' => $categories
+    ])
 
     {{-- Today's Special Offers --}}
     @include('components.offers')
@@ -27,4 +28,7 @@
 
     {{-- Newsletter --}}
     @include('components.newsletter')
+
+    {{-- Customization Modal --}}
+    @include('components.customizer-modal', ['customizerData' => $customizerData])
 @endsection

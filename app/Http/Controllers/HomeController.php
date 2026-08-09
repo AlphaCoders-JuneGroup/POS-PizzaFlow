@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Favorite;
 use App\Support\PizzaCatalog;
+use App\Support\PromotionCalculator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -57,10 +58,28 @@ class HomeController extends Controller
             ],
         ];
 
+        $categories = \App\Models\Category::where('is_active', true)->get();
+        $menuItems = \App\Models\MenuItem::where('is_active', true)->get();
+        $sizes = \App\Models\PizzaSize::where('is_active', true)->get();
+        $crusts = \App\Models\PizzaCrust::where('is_active', true)->get();
+        $sauces = \App\Models\PizzaSauce::where('is_active', true)->get();
+        $toppings = \App\Models\PizzaTopping::where('is_active', true)->get();
+
+        $promotions = PromotionCalculator::activePromotions();
+
         return view('home.index', [
             'featuredPizzas' => PizzaCatalog::all(),
             'favoriteSlugs' => $favoriteSlugs,
             'testimonials' => $testimonials,
+            'categories' => $categories,
+            'menuItems' => $menuItems,
+            'promotions' => $promotions,
+            'customizerData' => [
+                'sizes' => $sizes,
+                'crusts' => $crusts,
+                'sauces' => $sauces,
+                'toppings' => $toppings,
+            ],
         ]);
     }
 }
