@@ -9,7 +9,7 @@
         <h2 class="pf-dash-heading">Order Management</h2>
         <p class="pf-dash-sub">
             Receive and organize pickup/delivery orders. Status flow:
-            Received → Preparing → Baking → Ready → Out for Delivery.
+            Received → Preparing → Baking → Ready → Out for Delivery → Delivered.
         </p>
     </div>
     <div class="d-flex align-items-center gap-2 text-muted small" id="ordersLiveBadge">
@@ -30,7 +30,7 @@
             $active = $filters['status'] === $step['key'];
         @endphp
         <a href="{{ route('orders.manage.index', ['status' => $step['key'], 'type' => $filters['type'], 'q' => $filters['q']]) }}"
-           class="pf-order-flow-step {{ $active ? 'active' : '' }}">
+           class="pf-order-flow-step {{ $active ? 'active' : '' }} {{ $step['key'] === 'delivered' ? 'is-delivered' : '' }}">
             <span>{{ $step['label'] }}</span>
             <strong>{{ $count }}</strong>
         </a>
@@ -42,28 +42,28 @@
 
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
-        <div class="pf-dash-summary">
+        <a href="{{ route('orders.manage.index', ['status' => 'open', 'type' => $filters['type']]) }}" class="pf-dash-summary text-decoration-none">
             <div class="pf-dash-summary-icon tone-orange"><i class="bi bi-inbox"></i></div>
             <div><span>OPEN</span><strong id="ordersOpenCount">{{ $counts['open'] }}</strong></div>
-        </div>
+        </a>
     </div>
     <div class="col-6 col-md-3">
-        <div class="pf-dash-summary">
-            <div class="pf-dash-summary-icon tone-gold"><i class="bi bi-fire"></i></div>
-            <div><span>IN KITCHEN</span><strong>{{ ($counts['preparing'] ?? 0) + ($counts['baking'] ?? 0) }}</strong></div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="pf-dash-summary">
-            <div class="pf-dash-summary-icon tone-red"><i class="bi bi-bag-check"></i></div>
+        <a href="{{ route('orders.manage.index', ['status' => 'ready', 'type' => $filters['type']]) }}" class="pf-dash-summary text-decoration-none">
+            <div class="pf-dash-summary-icon tone-gold"><i class="bi bi-bag-check"></i></div>
             <div><span>READY</span><strong>{{ $counts['ready'] ?? 0 }}</strong></div>
-        </div>
+        </a>
     </div>
     <div class="col-6 col-md-3">
-        <div class="pf-dash-summary">
+        <a href="{{ route('orders.manage.index', ['status' => 'out_for_delivery', 'type' => $filters['type']]) }}" class="pf-dash-summary text-decoration-none">
             <div class="pf-dash-summary-icon tone-red"><i class="bi bi-truck"></i></div>
             <div><span>OUT</span><strong>{{ $counts['out_for_delivery'] ?? 0 }}</strong></div>
-        </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a href="{{ route('orders.manage.index', ['status' => 'delivered', 'type' => $filters['type']]) }}" class="pf-dash-summary text-decoration-none {{ $filters['status'] === 'delivered' ? 'is-active-filter' : '' }}">
+            <div class="pf-dash-summary-icon tone-red"><i class="bi bi-check2-circle"></i></div>
+            <div><span>DELIVERED</span><strong>{{ $counts['delivered'] ?? 0 }}</strong></div>
+        </a>
     </div>
 </div>
 
@@ -99,7 +99,15 @@
 
 <div class="pf-dash-panel">
     <div class="pf-dash-panel-head">
-        <h3>{{ $isDriver ? 'My assigned orders' : 'Orders' }}</h3>
+        <h3>
+            @if ($filters['status'] === 'delivered')
+                Delivered orders
+            @elseif ($isDriver)
+                My assigned orders
+            @else
+                Orders
+            @endif
+        </h3>
         <span class="text-muted small">{{ $orders->count() }} shown</span>
     </div>
     <div class="table-responsive">
@@ -120,7 +128,11 @@
                     <tr>
                         <td>
                             <strong>{{ $order->order_number }}</strong>
-                            <div class="text-muted small">{{ optional($order->placed_at)->diffForHumans() }}</div>
+                            @if ($order->normalizedStatus() === 'delivered' && $order->delivered_at)
+                                <div class="text-muted small">Delivered {{ $order->delivered_at->diffForHumans() }}</div>
+                            @else
+                                <div class="text-muted small">{{ optional($order->placed_at)->diffForHumans() }}</div>
+                            @endif
                         </td>
                         <td>
                             <div>{{ $order->customer_name ?: '—' }}</div>
@@ -139,17 +151,19 @@
                         <td class="fw-semibold">Rs. {{ number_format($order->total) }}</td>
                         <td class="text-end">
                             <a href="{{ route('orders.manage.show', $order) }}" class="btn btn-sm btn-pf-outline">View</a>
-                            @if ($canManage && $order->canAdvance())
-                                <form method="POST" action="{{ route('orders.manage.advance', $order) }}" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-pf-primary"
-                                            title="Mark as {{ $order->nextStatusLabel() }}">
-                                        → {{ $order->nextStatusLabel() }}
-                                    </button>
-                                </form>
-                            @endif
-                            @if ($canManage && $order->canModifyOrCancel() && ! $isDriver)
-                                <a href="{{ route('orders.manage.edit', $order) }}" class="btn btn-sm btn-pf-outline">Edit</a>
+                            @if ($order->normalizedStatus() !== 'received')
+                                @if ($canManage && $order->canAdvance())
+                                    <form method="POST" action="{{ route('orders.manage.advance', $order) }}" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-pf-primary"
+                                                title="Mark as {{ $order->nextStatusLabel() }}">
+                                            → {{ $order->nextStatusLabel() }}
+                                        </button>
+                                    </form>
+                                @endif
+                                @if ($canManage && $order->canModifyOrCancel() && ! $isDriver)
+                                    <a href="{{ route('orders.manage.edit', $order) }}" class="btn btn-sm btn-pf-outline">Edit</a>
+                                @endif
                             @endif
                         </td>
                     </tr>
@@ -157,11 +171,18 @@
                     <tr>
                         <td colspan="7" class="text-center text-muted py-4">
                             <div>No orders match this filter.</div>
-                            @if ($filters['type'] !== '' || ($filters['status'] !== 'open' && $filters['status'] !== 'all') || $filters['q'] !== '')
-                                <a href="{{ route('orders.manage.index', ['status' => 'open']) }}" class="btn btn-sm btn-pf-outline mt-2">
-                                    Clear filters (show all open orders)
-                                </a>
-                            @endif
+                            <div class="d-flex flex-wrap gap-2 justify-content-center mt-2">
+                                @if ($filters['status'] !== 'delivered')
+                                    <a href="{{ route('orders.manage.index', ['status' => 'delivered']) }}" class="btn btn-sm btn-pf-outline">
+                                        Show delivered
+                                    </a>
+                                @endif
+                                @if ($filters['type'] !== '' || ($filters['status'] !== 'open' && $filters['status'] !== 'all') || $filters['q'] !== '')
+                                    <a href="{{ route('orders.manage.index', ['status' => 'open']) }}" class="btn btn-sm btn-pf-outline">
+                                        Show open orders
+                                    </a>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @endforelse
@@ -197,6 +218,17 @@
     border-color: var(--dash-primary);
     background: rgba(230, 57, 70, 0.08);
     color: var(--dash-primary);
+}
+.pf-order-flow-step.is-delivered strong { color: #15803d; }
+.pf-order-flow-step.is-delivered.active {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+    color: #15803d;
+}
+a.pf-dash-summary { color: inherit; display: flex; }
+a.pf-dash-summary:hover { box-shadow: var(--dash-shadow); }
+a.pf-dash-summary.is-active-filter {
+    outline: 2px solid rgba(34, 197, 94, 0.45);
 }
 .pf-order-flow-arrow { color: #9CA3AF; }
 .pf-live-dot {
