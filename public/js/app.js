@@ -560,6 +560,13 @@
         promoField.value = (document.getElementById('cartPromoCode')?.value || localStorage.getItem(PROMO_CODE_KEY) || '').trim();
         form.appendChild(promoField);
 
+        const paymentMethodField = document.createElement('input');
+        paymentMethodField.type = 'hidden';
+        paymentMethodField.name = 'payment_method';
+        const selectedPayment = document.querySelector('input[name="cart_payment_method"]:checked');
+        paymentMethodField.value = selectedPayment ? selectedPayment.value : 'Cash on Delivery';
+        form.appendChild(paymentMethodField);
+
         document.body.appendChild(form);
         form.submit();
     }

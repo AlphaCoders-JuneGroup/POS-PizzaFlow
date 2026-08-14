@@ -4,6 +4,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryDispatchController;
 use App\Http\Controllers\GuestCheckoutController;
@@ -99,6 +100,8 @@ Route::middleware('auth')->group(function () {
 
     // User & Profile Management (Admin + Store Manager)
     Route::middleware('role:'.UserRole::Admin->value.'|'.UserRole::StoreManager->value)->group(function () {
+        Route::get('/dashboard/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics.index');
+        Route::get('/dashboard/analytics/export', [AnalyticsController::class, 'exportPDF'])->name('admin.analytics.export');
         Route::get('/dashboard/users', [UserManagementController::class, 'index'])->name('users.index');
         Route::get('/dashboard/users/create', [UserManagementController::class, 'create'])->name('users.create');
         Route::post('/dashboard/users', [UserManagementController::class, 'store'])->name('users.store');

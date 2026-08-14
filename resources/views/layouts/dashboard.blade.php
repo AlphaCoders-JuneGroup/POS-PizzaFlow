@@ -47,7 +47,8 @@
                                 $itemUrl = !empty($item['route']) && \Illuminate\Support\Facades\Route::has($item['route'])
                                     ? route($item['route'])
                                     : route($role->dashboardRoute()).'#module-'.$item['key'];
-                                $routePrefix = !empty($item['route']) ? explode('.', $item['route'])[0].'.*' : null;
+                                $parts = !empty($item['route']) ? explode('.', $item['route']) : [];
+                                $routePrefix = count($parts) >= 2 ? $parts[0].'.'.$parts[1].'.*' : (!empty($parts) ? $parts[0].'.*' : null);
                                 $itemActive = $routePrefix && request()->routeIs($routePrefix);
                             @endphp
                             <a href="{{ $itemUrl }}"

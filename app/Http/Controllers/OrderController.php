@@ -34,10 +34,15 @@ class OrderController extends Controller
                 'landmark' => $addr?->landmark,
                 'instructions' => $instructions,
                 'fulfillment_type' => $isPickup ? 'pickup' : 'delivery',
+                'payment_method' => $request->input('payment_method', 'Cash on Delivery'),
             ],
             $user,
             $request->input('promo_code')
         );
+
+        if (! empty($result['stripe_url'])) {
+            return redirect()->away($result['stripe_url']);
+        }
 
         $redirect = redirect()->route('home')
             ->with('success', $result['message'])
