@@ -60,10 +60,15 @@ class GuestCheckoutController extends Controller
                 'landmark' => $guest['postal_code'] ?? null,
                 'instructions' => $guest['delivery_notes'] ?? null,
                 'fulfillment_type' => $fulfillment,
+                'payment_method' => $request->input('payment_method', 'Cash on Delivery'),
             ],
             null,
             $validated['promo_code'] ?? null
         );
+
+        if (! empty($result['stripe_url'])) {
+            return redirect()->away($result['stripe_url']);
+        }
 
         $redirect = redirect()->route('home')
             ->with('success', $result['message'].' No login needed — staff can see it in Order Management.')
@@ -106,10 +111,15 @@ class GuestCheckoutController extends Controller
                 'landmark' => $guest['postal_code'] ?? null,
                 'instructions' => $guest['delivery_notes'] ?? null,
                 'fulfillment_type' => $fulfillment,
+                'payment_method' => $request->input('payment_method', 'Cash on Delivery'),
             ],
             null,
             $request->input('promo_code')
         );
+
+        if (! empty($result['stripe_url'])) {
+            return redirect()->away($result['stripe_url']);
+        }
 
         $redirect = redirect()->route('home')
             ->with('success', $result['message'].' Staff can see it in Order Management.')

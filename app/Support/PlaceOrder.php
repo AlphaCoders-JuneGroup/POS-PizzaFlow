@@ -4,6 +4,8 @@ namespace App\Support;
 
 use App\Models\Order;
 use App\Models\User;
+use Stripe\Stripe;
+use Stripe\Checkout\Session;
 
 class PlaceOrder
 {
@@ -22,6 +24,7 @@ class PlaceOrder
      */
     public static function create(array $cartItems, array $customer, ?User $user = null, ?string $promoCode = null): array
     {
+        Stripe::setApiKey(env('STRIPE_SECRET'));
         $subtotal = 0;
         $formattedItems = [];
 
@@ -100,7 +103,7 @@ class PlaceOrder
                 : $quote['total'],
             'status' => Order::STATUS_RECEIVED,
             'fulfillment_type' => $fulfillment,
-            'payment_method' => 'Cash on Delivery',
+            'payment_method' => $customer['payment_method'] ?? 'Cash on Delivery',
             'payment_status' => 'Pending',
             'promo_code' => $quote['promo_code'],
             'promotion_id' => $quote['promotion_id'],
@@ -141,10 +144,36 @@ class PlaceOrder
             $message .= ' (Free delivery applied)';
         }
 
-        return [
+        $response = [
             'order' => $order,
             'promo_warning' => $promoWarning,
             'message' => $message,
         ];
+
+        if (($customer['payment_method'] ?? 'Cash on Delivery') === 'Pay Online (Card)') {
+            $checkoutSession = Session::create([
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price_data' => [
+                        'currency' => 'lkr',
+                        'product_data' => [
+                            'name' => 'PizzaFlow Order ' . $orderNumber,
+                        ],
+                        'unit_amount' => (int) ($order->total * 100),
+                    ],
+                    'quantity' => 1,
+                ]],
+                'mode' => 'payment',
+                'success_url' => route('home') . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url' => route('home') . '?cancel=1',
+                'metadata' => [
+                    'order_id' => (string) $order->_id,
+                ],
+            ]);
+
+            $response['stripe_url'] = $checkoutSession->url;
+        }
+
+        return $response;
     }
 }

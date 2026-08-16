@@ -42,6 +42,20 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="guestPaymentCOD" value="Cash on Delivery" checked>
+                                    <label class="form-check-label" for="guestPaymentCOD">Cash on Delivery</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="guestPaymentCard" value="Pay Online (Card)">
+                                    <label class="form-check-label" for="guestPaymentCard">Pay Online (Card)</label>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="row g-3">
                             <div class="col-md-6">

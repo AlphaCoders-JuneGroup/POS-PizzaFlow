@@ -64,7 +64,7 @@ class DashboardModules
                 'description' => 'Handle payments, receipts, refunds, and payment status tracking.',
                 'icon' => 'bi-credit-card',
                 'group' => 'Operations',
-                'route' => null,
+                'route' => 'admin.billing.index',
                 'roles' => [UserRole::Admin->value, UserRole::StoreManager->value],
             ],
             [
@@ -112,7 +112,7 @@ class DashboardModules
                 'description' => 'Sales reports, popular pizzas, peak hours, and delivery performance.',
                 'icon' => 'bi-graph-up-arrow',
                 'group' => 'Insights',
-                'route' => null,
+                'route' => 'admin.analytics.index',
                 'roles' => [UserRole::Admin->value, UserRole::StoreManager->value],
             ],
         ];

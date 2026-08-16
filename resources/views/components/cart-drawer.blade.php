@@ -61,6 +61,20 @@
             </div>
         </div>
 
+        <div class="mb-3">
+            <label class="form-label small text-muted mb-1">Payment Method</label>
+            <div class="d-flex gap-3 small">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="cart_payment_method" id="cartPaymentCOD" value="Cash on Delivery" checked>
+                    <label class="form-check-label" for="cartPaymentCOD">Cash on Delivery</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="cart_payment_method" id="cartPaymentCard" value="Pay Online (Card)">
+                    <label class="form-check-label" for="cartPaymentCard">Pay Online (Card)</label>
+                </div>
+            </div>
+        </div>
+
         @auth
             @if(auth()->user()->isCustomer())
                 <button type="button" class="btn btn-pf-primary w-100 py-2 fw-semibold" id="cartPlaceOrderBtn">
