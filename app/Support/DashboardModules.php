@@ -64,7 +64,7 @@ class DashboardModules
                 'description' => 'Handle payments, receipts, refunds, and payment status tracking.',
                 'icon' => 'bi-credit-card',
                 'group' => 'Operations',
-                'route' => null,
+                'route' => 'admin.billing.index',
                 'roles' => [UserRole::Admin->value, UserRole::StoreManager->value],
             ],
             [

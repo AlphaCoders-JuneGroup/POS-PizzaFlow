@@ -108,6 +108,72 @@
         </tbody>
     </table>
 
+    <h2>Top Selling Pizzas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Pizza Name</th>
+                <th class="text-right">Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($topPizzas as $pizza)
+                <tr>
+                    <td>{{ $pizza->_id }}</td>
+                    <td class="text-right">{{ $pizza->total_quantity }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="2" style="text-align: center;">No data found.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <h2>Order Status Breakdown</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Status Name</th>
+                <th class="text-right">Count</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($statusBreakdown as $status)
+                <tr>
+                    <td>{{ $status->_id }}</td>
+                    <td class="text-right">{{ $status->count }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="2" style="text-align: center;">No data found.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <h2>Top Customers</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Customer Name</th>
+                <th class="text-right">Total Spent</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($topCustomers as $customer)
+                <tr>
+                    <td>{{ $customer->_id ?: 'Guest' }}</td>
+                    <td class="text-right">Rs. {{ number_format($customer->total_spent) }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="2" style="text-align: center;">No data found.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
     <div class="footer">
         Generated on {{ now()->format('M d, Y H:i:s') }}
     </div>

@@ -4,6 +4,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeliveryDispatchController;
@@ -30,6 +31,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/privacy-policy', [PageController::class, 'privacy'])->name('privacy');
 Route::get('/terms-of-service', [PageController::class, 'terms'])->name('terms');
 Route::post('/promotions/apply', [PromoCodeController::class, 'apply'])->name('promotions.apply');
+Route::post('/stripe/webhook', [\App\Http\Controllers\StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 /*
 |--------------------------------------------------------------------------
@@ -102,6 +104,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:'.UserRole::Admin->value.'|'.UserRole::StoreManager->value)->group(function () {
         Route::get('/dashboard/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics.index');
         Route::get('/dashboard/analytics/export', [AnalyticsController::class, 'exportPDF'])->name('admin.analytics.export');
+        Route::get('/dashboard/billing', [BillingController::class, 'index'])->name('admin.billing.index');
         Route::get('/dashboard/users', [UserManagementController::class, 'index'])->name('users.index');
         Route::get('/dashboard/users/create', [UserManagementController::class, 'create'])->name('users.create');
         Route::post('/dashboard/users', [UserManagementController::class, 'store'])->name('users.store');
